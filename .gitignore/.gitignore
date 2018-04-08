@@ -100,3 +100,13 @@ ENV/
 # mypy
 .mypy_cache/
 
+# idea ignore
+.idea/
+*.ipr
+*.iml
+*.iws
+
+# system ignore
+.DS_Store
+Thumbs.db
+/.idea/
