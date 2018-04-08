@@ -16,43 +16,42 @@ import datetime
 import time
 from datetime import date
 import shutil
+import zutil
 
 # 定义svn命令常量
-CONST_CMD_INFO = 'info'
-CONST_CMD_AUTHOR = 'author'
-CONST_CMD_CHANGED = 'changed'
+CONST_CMD_SVNLOOK = 'svnlook'
+CONST_CMD_SVNLOOK_INFO = 'info'
+CONST_CMD_SVNLOOK_AUTHOR = 'author'
+CONST_CMD_SVNLOOK_CHANGED = 'changed'
 CONST_DIR_ROOT_SNAPSHOT = '/data/codereview/snapshot_sonar/'
 CONST_DIR_ROOT_RAW = '/data/codereview/raw_copy/'
+CONST_DIR_ROOT_SCRIPTS = '/data/codereview/scripts/'
 CONST_AUTH_UNAME = 'root'
 CONST_AUTH_PWD = 'root'
 
 
 class SvnUtil:
     def __init__(self, repos_path, revision_num, svn_path, proj_name):
-        self.svnlook_cmd = 'svnlook'
-        # if svn_path is not None:
-        # TOOD svn_path 有用吗
-        # self.svnlook_cmd = os.path.join(svn_path, 'svnlook')
-
         self.proj_name = proj_name
         self.repos_path = repos_path
         self.revision_num = revision_num
 
     def list_author(self):
-        cmd = [self.svnlook_cmd, CONST_CMD_INFO, self.repos_path, '-r', self.revision_num]
+        cmd = [CONST_CMD_SVNLOOK, CONST_CMD_SVNLOOK_INFO, self.repos_path, '-r', self.revision_num]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         proc.wait()
         try:
             cmd_out = proc.stdout.read().splitlines()
             author = cmd_out[0]
             return author
-        except:
+        except StandardError as e:
             log_and_exit('debug::::' + "svn-sonar.py 执行 list_author 异常")
+            print str(e)
 
     # svnlook changed /my/repo -r 88
     # 查找出本次revision影响的文件
     def list_files(self):
-        cmd = [self.svnlook_cmd, CONST_CMD_CHANGED, self.repos_path, '-r', self.revision_num]
+        cmd = [CONST_CMD_SVNLOOK, CONST_CMD_SVNLOOK_CHANGED, self.repos_path, '-r', self.revision_num]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         proc.wait()
         try:
@@ -61,8 +60,9 @@ class SvnUtil:
             for one_line in cmd_out:
                 file_list.append(one_line)
             return file_list
-        except:
+        except StandardError as e:
             log_and_exit('debug::::' + "svn-sonar.py 执行 list_files 异常")
+            print str(e)
 
     # 过滤并并备份到另外的位置
     def filter_backup_files(self, changed_lines):
@@ -103,16 +103,14 @@ class SvnUtil:
                 print('debug::::' + 'svn copy ' + '成功更新')
             else:
                 raise StandardError()
-        except:
+        except StandardError as e:
             log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_update 异常')
+            print str(e)
 
     # 首次进行 svn checkout
     def _working_copy_checkout(self):
         proj_location = CONST_DIR_ROOT_RAW + self.proj_name
-        if not os.path.exists(proj_location):
-            os.makedirs(proj_location)
-
-        os.chdir(proj_location)
+        zutil.jump_smoothly(proj_location)
 
         cmd = ['svn', 'checkout', '--username', CONST_AUTH_UNAME, '--password', CONST_AUTH_PWD, 'svn://127.0.0.1']
         print cmd
@@ -125,8 +123,9 @@ class SvnUtil:
                 print('debug::::' + 'svn copy' + '成功检出')
             else:
                 raise StandardError()
-        except:
+        except StandardError as e:
             log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_checkout 异常')
+            print str(e)
 
     # 生成sonar使用的sonar-project.properties
     def generate_proj_info(self, author):
@@ -190,7 +189,6 @@ def main():
     svn_path = sys.argv[3]
     proj_name = sys.argv[4]  # 项目名称,用于标识目录
 
-    # TODO 项目的名称和唯一标识都没确定
     log_info(repo_path, rev_num)
     svn_util = SvnUtil(repo_path, rev_num, svn_path, proj_name)
     author = svn_util.list_author()
