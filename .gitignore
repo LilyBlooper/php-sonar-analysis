@@ -110,3 +110,6 @@ ENV/
 .DS_Store
 Thumbs.db
 /.idea/
+.gitignore
+.idea/inspectionProfiles/
+.idea/workspace.xml
