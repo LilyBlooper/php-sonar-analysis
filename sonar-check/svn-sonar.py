@@ -3,20 +3,16 @@
 
 import sys
 import json
+import os
+import subprocess
+import time
+import shutil
+import zutil
 
 if sys.version_info < (2, 4):
     sys.stderr.write("错误: 需要 Python 2.4 或者更高版本\n")
     sys.stderr.flush()
     sys.exit(1)
-
-import getopt
-import os
-import subprocess
-import datetime
-import time
-from datetime import date
-import shutil
-import zutil
 
 # 定义svn命令常量
 CONST_CMD_SVNLOOK = 'svnlook'
@@ -30,7 +26,7 @@ CONST_AUTH_UNAME = 'root'
 CONST_AUTH_PWD = 'root'
 
 
-class SvnUtil:
+class SvnHandler:
     def __init__(self, repos_path, revision_num, svn_path, proj_name):
         self.proj_name = proj_name
         self.repos_path = repos_path
@@ -45,8 +41,8 @@ class SvnUtil:
             author = cmd_out[0]
             return author
         except StandardError as e:
-            log_and_exit('debug::::' + "svn-sonar.py 执行 list_author 异常")
             print str(e)
+            zutil.log_and_exit('debug::::' + "svn-sonar.py 执行 list_author 异常")
 
     # svnlook changed /my/repo -r 88
     # 查找出本次revision影响的文件
@@ -61,8 +57,8 @@ class SvnUtil:
                 file_list.append(one_line)
             return file_list
         except StandardError as e:
-            log_and_exit('debug::::' + "svn-sonar.py 执行 list_files 异常")
             print str(e)
+            zutil.log_and_exit('debug::::' + "svn-sonar.py 执行 list_files 异常")
 
     # 过滤并并备份到另外的位置
     def filter_backup_files(self, changed_lines):
@@ -100,12 +96,12 @@ class SvnUtil:
             cmd_out = proc.stdout.read().splitlines()
             at_ver = cmd_out[-1]
             if 'At revision' in at_ver:
-                print('debug::::' + 'svn copy ' + '成功更新')
+                zutil.log_info('svn copy', '成功更新')
             else:
                 raise StandardError()
         except StandardError as e:
-            log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_update 异常')
             print str(e)
+            zutil.log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_update 异常')
 
     # 首次进行 svn checkout
     def _working_copy_checkout(self):
@@ -120,12 +116,12 @@ class SvnUtil:
             cmd_out = proc.stdout.read().splitlines()
             checked_ver = cmd_out[-1]
             if 'Checked out revision' in checked_ver:
-                print('debug::::' + 'svn copy' + '成功检出')
+                zutil.log_info('svn copy', '成功检出')
             else:
                 raise StandardError()
         except StandardError as e:
-            log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_checkout 异常')
             print str(e)
+            zutil.log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_checkout 异常')
 
     # 生成sonar使用的sonar-project.properties
     def generate_proj_info(self, author):
@@ -152,25 +148,10 @@ class SvnUtil:
         try:
             cmd_out = proc.stdout.read().splitlines()
             for cmd in cmd_out:
-                print('debug::::sonar-report:' + cmd)
+                zutil.log_debug('sonar-report', cmd)
         except StandardError as e:
-            log_and_exit('debug::::' + 'svn-sonar.py 执行 scan_by_sonar 异常')
             print str(e)
-
-
-# 记录异常并退出
-def log_and_exit(errmsg=None):
-    if errmsg is None:
-        stream = sys.stdout
-    else:
-        stream = sys.stderr
-    stream.write("%s\n" % __doc__)
-    stream.flush()
-    if errmsg:
-        stream.write("\nError: %s\n" % errmsg)
-        stream.flush()
-        sys.exit(2)
-    sys.exit(0)
+            zutil.log_and_exit('debug::::' + 'svn-sonar.py 执行 scan_by_sonar 异常')
 
 
 # 简单打印下日志
@@ -190,19 +171,19 @@ def main():
     proj_name = sys.argv[4]  # 项目名称,用于标识目录
 
     log_info(repo_path, rev_num)
-    svn_util = SvnUtil(repo_path, rev_num, svn_path, proj_name)
-    author = svn_util.list_author()
-    changed_lines = svn_util.list_files()
-    print ('debug::::' + 'author is : ' + author)
+    svn_handler = SvnHandler(repo_path, rev_num, svn_path, proj_name)
+    author = svn_handler.list_author()
+    changed_lines = svn_handler.list_files()
+    zutil.log_debug('author is', author)
     for oneline in changed_lines:
         print('debug::::' + 'changed files : ' + oneline)
     print('step1 : 检测文件变动成功!')
-    desc_location = svn_util.filter_backup_files(changed_lines)
+    desc_location = svn_handler.filter_backup_files(changed_lines)
     print('step2 : 更新并备份成功!')
     os.chdir(desc_location)
-    svn_util.generate_proj_info(author)
+    svn_handler.generate_proj_info(author)
     print('step3 : 生成sonar project配置成功!')
-    svn_util.scan_by_sonar()
+    svn_handler.scan_by_sonar()
     print('step4 : sonar检测成功!')
 
 

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import json
 import os
 
 '''\
@@ -24,3 +23,27 @@ def jump_smoothly(proj_location):
     check_or_create(proj_location)
     os.chdir(proj_location)
 
+
+# 记录异常并退出
+def log_and_exit(errmsg=None):
+    if errmsg is None:
+        stream = sys.stdout
+    else:
+        stream = sys.stderr
+    stream.write("%s\n" % __doc__)
+    stream.flush()
+    if errmsg:
+        stream.write("\nError: %s\n" % errmsg)
+        stream.flush()
+        sys.exit(2)
+    sys.exit(0)
+
+
+# 记录debug日志(自定义规则)
+def log_debug(key, value):
+    print ('debug::::' + key + 'is : ' + value)
+
+
+# 记录info日志(自定义规则)
+def log_info(key, value):
+    print ('info::::' + key + 'is : ' + value)
