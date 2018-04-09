@@ -67,13 +67,17 @@ class SvnHandler:
             self._working_copy_update()
         else:
             self._working_copy_checkout()
-        # TODO make copy to snapshot location
-        # 初次需要过滤CI框架代码
+        # make copy to snapshot location
         src_location = CONST_DIR_ROOT_RAW + self.proj_name
         desc_location = CONST_DIR_ROOT_SNAPSHOT + self.proj_name + '/' + self.revision_num
-        if not os.path.exists(desc_location):
-            shutil.copytree(src_location, desc_location)
-            return desc_location
+
+        for each_line in changed_lines:
+            if str(each_line).startswith("A") or str(each_line).startswith("M"):
+                line_info = zutil.splice_svn_changed(each_line)
+                zutil.log_debug('copy file:', line_info)
+                zutil.gracefully_copy(line_info, src_location, desc_location)
+                zutil.log_debug('copy file: .......', 'success')
+        # FIXME 如何过滤CI框架本身的代码
         return desc_location
 
     # 判断当前目录是否已经是一个svn copy
