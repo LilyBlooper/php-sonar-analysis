@@ -4,6 +4,8 @@
 import sys
 import os
 import shutil
+import subprocess, shlex
+from threading import Timer
 
 '''\
 @author : lilyblooper | blooper@163.com
@@ -50,6 +52,11 @@ def log_info(key, value):
     print ('info::::' + key + 'is : ' + value)
 
 
+# debug 用
+def log_pos(value):
+    print ('python debug sucks: .....' + value)
+
+
 # 截取有用的目录信息
 def splice_svn_changed(log):
     log_str = log[4:len(log)]
@@ -58,25 +65,35 @@ def splice_svn_changed(log):
 
 # 找到对应的父目录
 def get_parent_dir(file_to_copy):
-    r_pos = file_to_copy.rindex('/')
-    file_dir = file_to_copy[:r_pos + 1]
-    return file_dir
+    r_pos = file_to_copy.rfind('/')
+    if r_pos < 1:
+        return ''
+    else:
+        file_dir = file_to_copy[:r_pos + 1]
+        return file_dir
 
 
 # 获取文件名称
 def get_file_name(file_to_copy):
-    r_pos = file_to_copy.rindex('/')
-    file_name = file_to_copy[r_pos + 1:]
-    return file_name
+    r_pos = file_to_copy.rfind('/')
+    if r_pos < 1:
+        return file_to_copy
+    else:
+        file_name = file_to_copy[r_pos + 1:]
+        return file_name
 
 
 # copy 文件到指定目录
 def gracefully_copy(file_to_copy, src_root, dest_root):
+    print file_to_copy
     dest_dir = get_parent_dir(file_to_copy)
     dest_file = get_file_name(file_to_copy)
     dest_path = dest_root + '/' + dest_dir
     check_or_create(dest_path)
-    shutil.copy2(src_root + '/' + file_to_copy, dest_path + '/' + dest_file)
+    try:
+        shutil.copy2(src_root + '/' + file_to_copy, dest_path + '/' + dest_file)
+    except StandardError as e:
+        print str(e)
 
 
 # 主函数

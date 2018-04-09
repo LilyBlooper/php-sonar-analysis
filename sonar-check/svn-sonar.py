@@ -6,7 +6,6 @@ import json
 import os
 import subprocess
 import time
-import shutil
 import zutil
 
 if sys.version_info < (2, 4):
@@ -70,9 +69,8 @@ class SvnHandler:
         # make copy to snapshot location
         src_location = CONST_DIR_ROOT_RAW + self.proj_name
         desc_location = CONST_DIR_ROOT_SNAPSHOT + self.proj_name + '/' + self.revision_num
-
         for each_line in changed_lines:
-            if str(each_line).startswith("A") or str(each_line).startswith("M"):
+            if str(each_line).startswith("A") or str(each_line).startswith("U"):
                 line_info = zutil.splice_svn_changed(each_line)
                 zutil.log_debug('copy file:', line_info)
                 zutil.gracefully_copy(line_info, src_location, desc_location)
@@ -100,9 +98,7 @@ class SvnHandler:
             cmd_out = proc.stdout.read().splitlines()
             at_ver = cmd_out[-1]
             if 'At revision' in at_ver:
-                zutil.log_info('svn copy', '成功更新')
-            else:
-                raise StandardError()
+                zutil.log_info('svn up ', '成功更新')
         except StandardError as e:
             print str(e)
             zutil.log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_update 异常')
@@ -113,7 +109,6 @@ class SvnHandler:
         zutil.jump_smoothly(proj_location)
 
         cmd = ['svn', 'checkout', '--username', CONST_AUTH_UNAME, '--password', CONST_AUTH_PWD, 'svn://127.0.0.1']
-        print cmd
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         proc.wait()
         try:
@@ -121,14 +116,13 @@ class SvnHandler:
             checked_ver = cmd_out[-1]
             if 'Checked out revision' in checked_ver:
                 zutil.log_info('svn copy', '成功检出')
-            else:
-                raise StandardError()
         except StandardError as e:
             print str(e)
             zutil.log_and_exit('debug::::' + 'svn-sonar.py 执行 _working_copy_checkout 异常')
 
     # 生成sonar使用的sonar-project.properties
-    def generate_proj_info(self, author):
+    def generate_proj_info(self, author, dest_location):
+        zutil.jump_smoothly(dest_location)
         if not os.path.exists("sonar-project.properties"):
             f = open("sonar-project.properties", "a+")
             lines = []
@@ -145,7 +139,8 @@ class SvnHandler:
             f.writelines(lines)
 
     # 调用本地 sonar-scanner并上传结果
-    def scan_by_sonar(self):
+    def scan_by_sonar_sync(self, dest_location):
+        zutil.jump_smoothly(dest_location)
         cmd = ['/data/sonar-scanner/bin/sonar-scanner']
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         proc.wait()
@@ -156,6 +151,14 @@ class SvnHandler:
         except StandardError as e:
             print str(e)
             zutil.log_and_exit('debug::::' + 'svn-sonar.py 执行 scan_by_sonar 异常')
+
+    # 异步调用本地 sonar-scanner
+    def scan_by_sonar_async(self, dest_location):
+        zutil.jump_smoothly(dest_location)
+        subprocess.Popen(['nohup', '/data/sonar-scanner/bin/sonar-scanner&'],
+                         stdout=open('/dev/null', 'w'),
+                         stderr=open('logfile.log', 'a')
+                         )
 
 
 # 简单打印下日志
@@ -182,12 +185,11 @@ def main():
     for oneline in changed_lines:
         print('debug::::' + 'changed files : ' + oneline)
     print('step1 : 检测文件变动成功!')
-    desc_location = svn_handler.filter_backup_files(changed_lines)
+    dest_location = svn_handler.filter_backup_files(changed_lines)
     print('step2 : 更新并备份成功!')
-    os.chdir(desc_location)
-    svn_handler.generate_proj_info(author)
+    svn_handler.generate_proj_info(author, dest_location)
     print('step3 : 生成sonar project配置成功!')
-    svn_handler.scan_by_sonar()
+    svn_handler.scan_by_sonar_async(dest_location)
     print('step4 : sonar检测成功!')
 
 
