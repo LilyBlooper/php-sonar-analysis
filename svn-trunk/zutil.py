@@ -96,6 +96,16 @@ def gracefully_copy(file_to_copy, src_root, dest_root):
         print str(e)
 
 
+# append指定内容到文件
+def gracefully_append_file(file_path, file_full_name, content):
+    check_or_create(file_path)
+    file_to_append = file_path + "/" + file_full_name
+    print (file_to_append)
+    f = open(file_to_append, "a+")
+    for one_line in content:
+        f.write(one_line + "\r\n")
+
+
 # 主函数
 def main():
     spliced = splice_svn_changed('A   service/application_zdm/libraries/zmop/request/ZhimaOpenLogFeedbackRequest.php')
