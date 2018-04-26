@@ -17,7 +17,7 @@ if sys.version_info < (2, 4):
 CONST_CMD_SVN = 'svn'
 CONST_CMD_SVN_LOG = 'log'
 CONST_DIR_ROOT = '/data/smartrepo'
-CONST_DIR_ROOT_SCRIPTS = '/scripts/'
+CONST_DIR_ROOT_SCRIPTS = '/scripts'
 CONST_DIR_ROOT_DATA = '/data'
 
 
@@ -49,7 +49,7 @@ def list_svn_log(svn_path, rev_from, rev_to):
 
 def save_svn_log(proj_name, svn_path, rev_from, rev_to):
     svn_log_list = list_svn_log(svn_path, rev_from, rev_to)
-    full_path = CONST_DIR_ROOT + CONST_DIR_ROOT_SCRIPTS + CONST_DIR_ROOT_DATA
+    full_path = CONST_DIR_ROOT + CONST_DIR_ROOT_DATA
     zutil.gracefully_append_file(full_path, proj_name + ".log", svn_log_list)
 
 
