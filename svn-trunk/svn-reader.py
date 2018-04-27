@@ -56,8 +56,8 @@ def list_svn_log(svn_path, rev_from, rev_to):
 # 保存svn log 到指定文件 (无处理)
 def save_svn_log(proj_name, svn_path, rev_from, rev_to):
     svn_log_list = list_svn_log(svn_path, rev_from, rev_to)
-    zutil.gracefully_write_file(CONST_DIR_ROOT + "/temp", "temp.xml", svn_log_list)
-    formatted_list = prettify(CONST_DIR_ROOT + "/temp/temp.xml")
+    zutil.gracefully_write_file(CONST_DIR_ROOT + "/temp", proj_name + "-temp.xml", svn_log_list)
+    formatted_list = prettify(CONST_DIR_ROOT + "/temp" + "/" + proj_name + "-temp.xml")
     # 1. save file
     full_path = CONST_DIR_ROOT + CONST_DIR_ROOT_DATA
     zutil.gracefully_append_file(full_path, proj_name + CONST_FTYPE_DAT, formatted_list)
