@@ -4,6 +4,7 @@
 import sys
 import os
 import shutil
+import json
 import subprocess, shlex
 from threading import Timer
 
@@ -97,6 +98,14 @@ def gracefully_copy(file_to_copy, src_root, dest_root):
 
 
 # append指定内容到文件
+def gracefully_append_file_oneline(file_path, file_full_name, content):
+    check_or_create(file_path)
+    file_to_append = file_path + "/" + file_full_name
+    f = open(file_to_append, "a+")
+    f.write(content)
+
+
+# append指定内容到文件
 def gracefully_append_file(file_path, file_full_name, content):
     check_or_create(file_path)
     file_to_append = file_path + "/" + file_full_name
@@ -104,6 +113,36 @@ def gracefully_append_file(file_path, file_full_name, content):
     f = open(file_to_append, "a+")
     for one_line in content:
         f.write(one_line + "\r\n")
+
+
+# write 指定内容到文件
+def gracefully_write_file_oneline(file_path, file_full_name, content):
+    check_or_create(file_path)
+    file_to_append = file_path + "/" + file_full_name
+    f = open(file_to_append, "w+")
+    f.write(content)
+
+
+# write 指定内容到文件
+def gracefully_write_file(file_path, file_full_name, content):
+    check_or_create(file_path)
+    file_to_append = file_path + "/" + file_full_name
+    print (file_to_append)
+    f = open(file_to_append, "w+")
+    for one_line in content:
+        f.write(one_line + "\r\n")
+
+
+# json encode 只有一行,支持特殊日期
+def encodeJsonStringOneline(array):
+    oneLineJson = json.dumps(array, sort_keys=True, default=str)
+    return oneLineJson
+
+
+# json encode 带有美化
+def encodeJsonStringPretty(array):
+    prettyJson = json.dumps(array, indent=4, sort_keys=True, default=str)
+    return prettyJson
 
 
 # 主函数
