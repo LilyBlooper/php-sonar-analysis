@@ -75,6 +75,8 @@ def prettify(xml_location):
         oneLine = buildOneLine(logentry)
         pretty_log_list.append(oneLine)
     print pretty_log_list
+    # omit first logentry ( which revid = lastupdated)
+    del pretty_log_list[0]
     return pretty_log_list
 
 
