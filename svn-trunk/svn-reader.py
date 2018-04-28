@@ -82,9 +82,9 @@ def prettify(xml_location):
 
 # 解析svn的时间戳
 def parseSvnDate(raw_str):
-    format_date = datetime.strptime(raw_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-    return format_date
-
+    # format_date = datetime.strptime(raw_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+    # return format_date
+    return raw_str
 
 # 构造一行
 def buildOneLine(logentry):
