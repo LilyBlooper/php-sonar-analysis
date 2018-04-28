@@ -141,8 +141,8 @@ def encodeJsonStringOneline(array):
 
 # json encode 带有美化
 def encodeJsonStringPretty(array):
-    prettyJson = json.dumps(array, indent=4, sort_keys=True, default=str)
-    return prettyJson
+    pretty_json = json.dumps(array, indent=4, sort_keys=True, default=str)
+    return pretty_json
 
 
 # 主函数
